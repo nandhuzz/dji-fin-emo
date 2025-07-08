@@ -6,10 +6,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nandhuzz/go-basics/pkg/auth"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
 	Register(ctx context.Context, name, email, password string) (*User, error)
+	Login(ctx context.Context, email, password string) (string, error)
 }
 
 type service struct {
@@ -26,11 +29,13 @@ func (s *service) Register(ctx context.Context, name, email, password string) (*
 		return nil, errors.New("email already in use")
 	}
 
+	hashed, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
 	user := User{
 		ID:        uuid.NewString(),
 		Name:      name,
 		Email:     email,
-		Password:  password, // TODO: hash password
+		Password:  string(hashed),
 		CreatedAt: time.Now(),
 	}
 
@@ -40,4 +45,18 @@ func (s *service) Register(ctx context.Context, name, email, password string) (*
 	}
 
 	return &user, nil
+}
+
+func (s *service) Login(ctx context.Context, email, password string) (string, error) {
+	user, err := s.repo.GetUserByEmail(ctx, email)
+	if err != nil || user == nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	return auth.GenerateToken(user.ID)
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/nandhuzz/go-basics/pkg/auth"
 	"github.com/nandhuzz/go-basics/pkg/config"
 	"github.com/nandhuzz/go-basics/pkg/db"
 	"github.com/nandhuzz/go-basics/pkg/logger"
@@ -48,7 +49,7 @@ func main() {
 	setupRoutes(r, dbPool)
 
 	port := getEnv("PORT", "8080")
-	log.Printf("e80 Server is running on port %s", port)
+	log.Printf("\u2705 Server is running on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
@@ -66,6 +67,13 @@ func setupRoutes(r *chi.Mux, pool *pgxpool.Pool) {
 			tx := txFromContext(ctx) // ✅ now safe to use
 			return user.NewService(user.NewRepository(tx))
 		}))
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(auth.JWTMiddleware)
+		r.Get("/accounts", func(w http.ResponseWriter, r *http.Request) {
+			userID, _ := auth.UserIDFromContext(r.Context())
+			w.Write([]byte(`{"message": "Protected /accounts route for user: ` + userID + `"}`))
+		})
 	})
 }
 

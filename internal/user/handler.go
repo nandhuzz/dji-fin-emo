@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/nandhuzz/go-basics/pkg/auth"
 )
 
 func Router(serviceFactory func(ctx context.Context) Service) http.Handler {
@@ -41,6 +42,41 @@ func Router(serviceFactory func(ctx context.Context) Service) http.Handler {
 
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(resp)
+	})
+
+	r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		}
+
+		service := serviceFactory(r.Context())
+		token, err := service.Login(r.Context(), req.Email, req.Password)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		resp := struct {
+			Token string `json:"token"`
+		}{Token: token}
+
+		json.NewEncoder(w).Encode(resp)
+	})
+
+	r.With(auth.JWTMiddleware).Get("/me", func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := auth.UserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		json.NewEncoder(w).Encode(struct {
+			UserID string `json:"user_id"`
+		}{userID})
 	})
 
 	return r
