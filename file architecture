@@ -1,0 +1,28 @@
+finance-api/
+├── cmd/
+│   └── server/              # Main application entrypoint
+│       └── main.go
+├── internal/
+│   ├── user/                # User module
+│   │   ├── handler.go       # HTTP handlers
+│   │   ├── service.go       # Business logic
+│   │   ├── repository.go    # DB logic
+│   │   └── model.go         # Structs and DTOs
+│   ├── account/             # Account module (same structure)
+│   ├── transaction/         # Transaction module
+│   ├── category/            # Category module
+│   └── middleware/          # Custom middleware (auth, logging, etc)
+├── pkg/                     # Reusable packages/utilities
+│   ├── config/              # Environment/config loader
+│   ├── db/                  # DB connection and migrations
+│   ├── logger/              # Logging utility
+│   └── auth/                # JWT or OAuth utils
+├── api/
+│   └── docs/                # OpenAPI/Swagger specs (optional)
+├── scripts/                 # Init or deploy scripts
+├── test/                    # Unit and integration tests
+├── .env
+├── docker-compose.yml
+├── Dockerfile
+├── go.mod
+└── README.md
