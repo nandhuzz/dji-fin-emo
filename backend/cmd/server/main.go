@@ -74,19 +74,11 @@ func getEnv(key, fallback string) string {
 func serveStaticFiles(r *chi.Mux) {
 	distDir := "./frontend/dist"
 
-	r.HandleFunc("/assets/*", func(w http.ResponseWriter, r *http.Request) {
-		path := filepath.Join(distDir, r.URL.Path)
-		ext := filepath.Ext(path)
+	// Serve everything under /assets and other static files
+	fs := http.StripPrefix("/", http.FileServer(http.Dir(distDir)))
+	r.Handle("/*", fs)
 
-		// Set correct MIME type
-		if mimeType := mime.TypeByExtension(ext); mimeType != "" {
-			w.Header().Set("Content-Type", mimeType)
-		}
-
-		http.ServeFile(w, r, path)
-	})
-
-	// SPA fallback
+	// Fallback: Serve index.html for client-side routing (SPA)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(distDir, "index.html"))
 	})
