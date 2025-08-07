@@ -4,8 +4,10 @@ package main
 import (
 	"context"
 	"log"
+	"mime"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -33,23 +35,32 @@ func main() {
 	defer cancel()
 
 	if err := dbPool.Ping(ctxTimeout); err != nil {
-		log.Fatalf("\u274c Unable to ping database: %v", err)
+		log.Fatalf("❌ Unable to ping database: %v", err)
 	}
-	log.Println("\u2705 Connected to PostgreSQL")
+	log.Println("✅ Connected to PostgreSQL")
+
+	// Register additional MIME types
+	_ = mime.AddExtensionType(".js", "application/javascript")
+	_ = mime.AddExtensionType(".css", "text/css")
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.SetHeader("Content-Type", "application/json"))
 
+	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// Serve static files from dist
+	serveStaticFiles(r)
+
+	// Setup API routes
 	setupRoutes(r, dbPool)
 
 	port := getEnv("PORT", "8080")
-	log.Printf("\u2705 Server is running on port %s", port)
+	log.Printf("✅ Server is running on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
@@ -60,16 +71,40 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+func serveStaticFiles(r *chi.Mux) {
+	distDir := "./frontend/dist"
+
+	r.HandleFunc("/assets/*", func(w http.ResponseWriter, r *http.Request) {
+		path := filepath.Join(distDir, r.URL.Path)
+		ext := filepath.Ext(path)
+
+		// Set correct MIME type
+		if mimeType := mime.TypeByExtension(ext); mimeType != "" {
+			w.Header().Set("Content-Type", mimeType)
+		}
+
+		http.ServeFile(w, r, path)
+	})
+
+	// SPA fallback
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(distDir, "index.html"))
+	})
+}
+
 func setupRoutes(r *chi.Mux, pool *pgxpool.Pool) {
 	r.Route("/users", func(r chi.Router) {
-		r.Use(withTx(pool)) // ✅ middleware ensures tx is added to ctx
+		r.Use(middleware.SetHeader("Content-Type", "application/json"))
+		r.Use(withTx(pool))
 		r.Mount("/", user.Router(func(ctx context.Context) user.Service {
-			tx := txFromContext(ctx) // ✅ now safe to use
+			tx := txFromContext(ctx)
 			return user.NewService(user.NewRepository(tx))
 		}))
 	})
+
 	r.Group(func(r chi.Router) {
 		r.Use(auth.JWTMiddleware)
+		r.Use(middleware.SetHeader("Content-Type", "application/json"))
 		r.Get("/accounts", func(w http.ResponseWriter, r *http.Request) {
 			userID, _ := auth.UserIDFromContext(r.Context())
 			w.Write([]byte(`{"message": "Protected /accounts route for user: ` + userID + `"}`))
