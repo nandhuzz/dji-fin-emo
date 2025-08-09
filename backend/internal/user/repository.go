@@ -15,16 +15,17 @@ type User struct {
 	CreatedAt time.Time
 }
 
-type Repository interface {
+type UserRepository interface {
 	CreateUser(ctx context.Context, user User) error
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	GetUserByID(ctx context.Context, userId string) (*User, error)
 }
 
 type repository struct {
 	tx pgx.Tx
 }
 
-func NewRepository(tx pgx.Tx) Repository {
+func NewRepository(tx pgx.Tx) UserRepository {
 	return &repository{tx: tx}
 }
 
@@ -42,6 +43,23 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 		FROM users
 		WHERE email = $1
 	`, email)
+
+	var u User
+	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.CreatedAt); err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *repository) GetUserByID(ctx context.Context, userId string) (*User, error) {
+	row := r.tx.QueryRow(ctx, `
+		SELECT id, name, email, password_hash, created_at
+		FROM users
+		WHERE id = $1
+	`, userId)
 
 	var u User
 	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.CreatedAt); err != nil {

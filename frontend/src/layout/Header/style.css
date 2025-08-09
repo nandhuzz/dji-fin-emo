@@ -1,0 +1,8 @@
+.gold-silver-glow {
+  background: linear-gradient(90deg, rgb(192,136,43,255), silver);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+

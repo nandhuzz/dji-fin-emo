@@ -1,10 +1,13 @@
+import './style.css';
 
 const Footer = () => {
-    return (
-        <>
-          This is Footer component 
-        </>
-    )
+  return (
+    <>
+      <div className="footer">
+        <label>Dji Fin &copy; 2025. All rights reserved. </label>
+      </div>
+    </>
+  )
 }
 
 export default Footer

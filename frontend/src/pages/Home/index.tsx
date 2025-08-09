@@ -6,12 +6,10 @@ const Home  =  () => {
     return(
      <>
      <Header/>
-    <h2>Site under construction</h2>
-    <img src={underConstructionImage} width="100%" alt="Under Construction"/>
     <Footer/>
     </>
     )
 }
 
 
-export default Home 
+export default Home

@@ -13,13 +13,14 @@ import (
 type Service interface {
 	Register(ctx context.Context, name, email, password string) (*User, error)
 	Login(ctx context.Context, email, password string) (string, error)
+	Details(ctx context.Context, userId string) (*User, error)
 }
 
 type service struct {
-	repo Repository
+	repo UserRepository
 }
 
-func NewService(repo Repository) Service {
+func NewService(repo UserRepository) Service {
 	return &service{repo: repo}
 }
 
@@ -59,4 +60,12 @@ func (s *service) Login(ctx context.Context, email, password string) (string, er
 	}
 
 	return auth.GenerateToken(user.ID)
+}
+
+func (s *service) Details(ctx context.Context, userId string) (*User, error) {
+	user, err := s.repo.GetUserByID(ctx, userId)
+	if err != nil || user == nil {
+		return nil, errors.New("invalid email or password")
+	}
+	return user, nil
 }

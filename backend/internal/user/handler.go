@@ -74,9 +74,16 @@ func Router(serviceFactory func(ctx context.Context) Service) http.Handler {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+		service := serviceFactory(r.Context())
+		userDetails, err := service.Details(r.Context(), userID)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 		json.NewEncoder(w).Encode(struct {
 			UserID string `json:"user_id"`
-		}{userID})
+			Name   string `json:"name"`
+		}{userID, userDetails.Name})
 	})
 
 	return r
