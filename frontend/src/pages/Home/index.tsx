@@ -1,13 +1,17 @@
 import Footer from "@layout/Footer"
 import Header from "@layout/Header"
-import underConstructionImage from "@assets/underConstuction.gif"
+import AccountContainer from "@components/accounts"
+import Transactions from "@components/transactions"
+import "./style.css"
 
-const Home  =  () => {
-    return(
-     <>
-     <Header/>
-    <Footer/>
-    </>
+const Home = () => {
+    return (
+        <div className="homeContainer">
+            <Header />
+            <AccountContainer />
+            <Transactions />
+            <Footer />
+        </div>
     )
 }
 
