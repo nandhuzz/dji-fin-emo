@@ -6,9 +6,11 @@ import { fileURLToPath } from 'url';
 // Simulate __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+import tailwindcss from '@tailwindcss/vite'
+
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(),  tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
@@ -21,3 +23,4 @@ export default defineConfig({
     },
   },
 });
+
