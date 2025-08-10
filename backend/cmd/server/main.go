@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -39,13 +41,22 @@ func main() {
 	}
 	log.Println("✅ Connected to PostgreSQL")
 
-	// Register additional MIME types
 	_ = mime.AddExtensionType(".js", "application/javascript")
 	_ = mime.AddExtensionType(".css", "text/css")
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	// CORS settings
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"}, // allow your frontend
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // 5 minutes
+	}))
 
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -74,13 +85,25 @@ func getEnv(key, fallback string) string {
 func serveStaticFiles(r *chi.Mux) {
 	distDir := "./frontend/dist"
 
-	// Serve everything under /assets and other static files
+	// Custom file server with cache headers
 	fs := http.StripPrefix("/", http.FileServer(http.Dir(distDir)))
-	r.Handle("/*", fs)
+	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// Set Cache-Control based on path
+		if strings.HasPrefix(req.URL.Path, "/assets/") {
+			// Long cache for static hashed assets (Vite-generated)
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		} else if strings.HasSuffix(req.URL.Path, ".html") || req.URL.Path == "/" {
+			// No cache for HTML files
+			w.Header().Set("Cache-Control", "no-cache")
+		}
 
-	// Fallback: Serve index.html for client-side routing (SPA)
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filepath.Join(distDir, "index.html"))
+		fs.ServeHTTP(w, req)
+	}))
+
+	// Fallback: Serve index.html for SPA routes
+	r.NotFound(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
+		http.ServeFile(w, req, filepath.Join(distDir, "index.html"))
 	})
 }
 
