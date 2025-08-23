@@ -1,9 +1,3 @@
-const Transactions = () =>{
-    return(
-        <div>
-        Transactions
-        </div>
-    )
-}
+import {Transactions} from "./Transactions";
 
 export default Transactions
