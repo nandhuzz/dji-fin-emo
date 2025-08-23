@@ -9,7 +9,7 @@ interface AccountButtonProps {
 
 const AccountButton = ({ accountName, balance, color }: AccountButtonProps) => {
     return (
-        <div className={`${color} text-red rounded-xl flex flex-col items-start justify-center`}>
+        <div className={`${color} text-red rounded-xl flex flex-col items-start justify-center p-2`}>
 
             <span className="text-sm font-medium">{accountName}</span>
             <span className="text-lg font-bold">
