@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/nandhuzz/go-basics/pkg/auth"
+	"github.com/nandhuzz/dji-fin-emo/pkg/auth"
 )
 
 func Router(serviceFactory func(ctx context.Context) Service) http.Handler {

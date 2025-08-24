@@ -17,12 +17,12 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/nandhuzz/go-basics/pkg/auth"
-	"github.com/nandhuzz/go-basics/pkg/config"
-	"github.com/nandhuzz/go-basics/pkg/db"
-	"github.com/nandhuzz/go-basics/pkg/logger"
+	"github.com/nandhuzz/dji-fin-emo/pkg/auth"
+	"github.com/nandhuzz/dji-fin-emo/pkg/config"
+	"github.com/nandhuzz/dji-fin-emo/pkg/db"
+	"github.com/nandhuzz/dji-fin-emo/pkg/logger"
 
-	"github.com/nandhuzz/go-basics/internal/user"
+	"github.com/nandhuzz/dji-fin-emo/internal/user"
 )
 
 func main() {

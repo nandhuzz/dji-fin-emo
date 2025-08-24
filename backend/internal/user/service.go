@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nandhuzz/go-basics/pkg/auth"
+	"github.com/nandhuzz/dji-fin-emo/pkg/auth"
 	"golang.org/x/crypto/bcrypt"
 )
 
